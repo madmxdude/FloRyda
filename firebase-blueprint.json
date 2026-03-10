@@ -1,0 +1,38 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user-specific metadata and global high scores.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "displayName": { "type": "string", "description": "User's display name" },
+        "lastActive": { "type": "string", "format": "date-time", "description": "Last time the user played" }
+      },
+      "required": ["uid", "displayName"]
+    },
+    "Score": {
+      "title": "Track Score",
+      "description": "A single score entry for a specific track.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User who achieved the score" },
+        "displayName": { "type": "string", "description": "User's name at the time of score" },
+        "trackId": { "type": "string", "description": "ID of the challenge track" },
+        "score": { "type": "number", "description": "Distance traveled" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the score was achieved" }
+      },
+      "required": ["uid", "trackId", "score", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Individual user profiles"
+    },
+    "/scores/{scoreId}": {
+      "schema": "Score",
+      "description": "Global scores for all tracks"
+    }
+  }
+}

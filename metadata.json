@@ -1,0 +1,5 @@
+{
+  "name": "FloRyda",
+  "description": "A physics-based drawing game where you create tracks for a rider to slide on. Features free play, challenge tracks, and global leaderboards.",
+  "requestFramePermissions": []
+}
