@@ -2,15 +2,52 @@ export class DrawingManager {
     constructor(canvas) {
         this.canvas = canvas;
         this.lines = [];
+        this.history = [[]]; // Start with empty state
+        this.historyIndex = 0;
         this.isDrawing = false;
         this.lastPoint = null;
         this.startPoint = null;
         this.currentPoint = null;
-        this.drawMode = 'free'; // 'free' or 'straight'
+        this.drawMode = 'free'; // 'free', 'straight', or 'eraser'
+        this.eraseRadius = 20;
     }
 
     setDrawMode(mode) {
         this.drawMode = mode;
+    }
+
+    saveState() {
+        // If we're not at the end of the history (due to undos), truncate the redo part
+        if (this.historyIndex < this.history.length - 1) {
+            this.history = this.history.slice(0, this.historyIndex + 1);
+        }
+        
+        this.history.push([...this.lines.map(l => ({ ...l }))]);
+        this.historyIndex++;
+        
+        // Limit history size
+        if (this.history.length > 50) {
+            this.history.shift();
+            this.historyIndex--;
+        }
+    }
+
+    undo() {
+        if (this.historyIndex > 0) {
+            this.historyIndex--;
+            this.lines = [...this.history[this.historyIndex].map(l => ({ ...l }))];
+            return true;
+        }
+        return false;
+    }
+
+    redo() {
+        if (this.historyIndex < this.history.length - 1) {
+            this.historyIndex++;
+            this.lines = [...this.history[this.historyIndex].map(l => ({ ...l }))];
+            return true;
+        }
+        return false;
     }
 
     startDrawing(x, y, camera) {
@@ -19,6 +56,10 @@ export class DrawingManager {
         this.lastPoint = point;
         this.startPoint = point;
         this.currentPoint = point;
+
+        if (this.drawMode === 'eraser') {
+            this.eraseAt(point.x, point.y);
+        }
     }
 
     draw(x, y, camera) {
@@ -39,7 +80,26 @@ export class DrawingManager {
                 });
                 this.lastPoint = currentPoint;
             }
+        } else if (this.drawMode === 'eraser') {
+            this.eraseAt(currentPoint.x, currentPoint.y);
         }
+    }
+
+    eraseAt(x, y) {
+        const initialCount = this.lines.length;
+        this.lines = this.lines.filter(line => {
+            // Distance from point to line segment
+            const dist = this.distToSegment({ x, y }, { x: line.x1, y: line.y1 }, { x: line.x2, y: line.y2 });
+            return dist > this.eraseRadius;
+        });
+    }
+
+    distToSegment(p, v, w) {
+        const l2 = (v.x - w.x) ** 2 + (v.y - w.y) ** 2;
+        if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+        let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+        t = Math.max(0, Math.min(1, t));
+        return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
     }
 
     stopDrawing() {
@@ -57,6 +117,9 @@ export class DrawingManager {
             }
         }
 
+        // Save state for undo/redo
+        this.saveState();
+
         this.isDrawing = false;
         this.lastPoint = null;
         this.startPoint = null;
@@ -65,6 +128,7 @@ export class DrawingManager {
 
     clear() {
         this.lines = [];
+        this.saveState();
     }
 
     render(ctx, camera) {
@@ -88,6 +152,14 @@ export class DrawingManager {
             ctx.lineTo(this.currentPoint.x - camera.x, this.currentPoint.y - camera.y);
             ctx.stroke();
             ctx.setLineDash([]);
+        }
+
+        // Render eraser preview
+        if (this.drawMode === 'eraser' && this.currentPoint && !this.isDrawing) {
+            ctx.beginPath();
+            ctx.arc(this.currentPoint.x - camera.x, this.currentPoint.y - camera.y, this.eraseRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(239, 68, 68, 0.5)'; // red-500
+            ctx.stroke();
         }
     }
 }

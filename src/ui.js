@@ -24,7 +24,10 @@ export class UIManager {
             leaderboardContent: document.getElementById('leaderboard-content'),
             closeLeaderboardBtn: document.getElementById('close-leaderboard'),
             drawFreeBtn: document.getElementById('btn-draw-free'),
-            drawStraightBtn: document.getElementById('btn-draw-straight')
+            drawStraightBtn: document.getElementById('btn-draw-straight'),
+            drawEraserBtn: document.getElementById('btn-draw-eraser'),
+            undoBtn: document.getElementById('btn-undo'),
+            redoBtn: document.getElementById('btn-redo')
         };
 
         this.setupListeners();
@@ -50,6 +53,10 @@ export class UIManager {
 
         this.elements.drawFreeBtn.onclick = () => this.game.setDrawMode('free');
         this.elements.drawStraightBtn.onclick = () => this.game.setDrawMode('straight');
+        this.elements.drawEraserBtn.onclick = () => this.game.setDrawMode('eraser');
+        
+        this.elements.undoBtn.onclick = () => this.game.undo();
+        this.elements.redoBtn.onclick = () => this.game.redo();
     }
 
     update(state) {
@@ -86,6 +93,12 @@ export class UIManager {
         this.elements.drawFreeBtn.classList.toggle('text-zinc-950', state.drawMode === 'free');
         this.elements.drawStraightBtn.classList.toggle('bg-emerald-500', state.drawMode === 'straight');
         this.elements.drawStraightBtn.classList.toggle('text-zinc-950', state.drawMode === 'straight');
+        this.elements.drawEraserBtn.classList.toggle('bg-emerald-500', state.drawMode === 'eraser');
+        this.elements.drawEraserBtn.classList.toggle('text-zinc-950', state.drawMode === 'eraser');
+
+        // Update Undo/Redo states
+        this.elements.undoBtn.disabled = !state.canUndo;
+        this.elements.redoBtn.disabled = !state.canRedo;
     }
 
     showMessage(title, body) {

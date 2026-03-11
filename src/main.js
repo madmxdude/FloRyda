@@ -44,6 +44,7 @@ class Game {
         this.canvas.addEventListener('mousedown', (e) => {
             if (this.isPlaying) return;
             this.drawingManager.startDrawing(e.clientX, e.clientY, this.camera);
+            this.updateUI();
         });
 
         window.addEventListener('mousemove', (e) => {
@@ -52,7 +53,9 @@ class Game {
         });
 
         window.addEventListener('mouseup', () => {
+            if (this.isPlaying) return;
             this.drawingManager.stopDrawing();
+            this.updateUI();
         });
 
         // Touch support
@@ -60,6 +63,7 @@ class Game {
             if (this.isPlaying) return;
             const touch = e.touches[0];
             this.drawingManager.startDrawing(touch.clientX, touch.clientY, this.camera);
+            this.updateUI();
         });
 
         window.addEventListener('touchmove', (e) => {
@@ -69,7 +73,9 @@ class Game {
         });
 
         window.addEventListener('touchend', () => {
+            if (this.isPlaying) return;
             this.drawingManager.stopDrawing();
+            this.updateUI();
         });
     }
 
@@ -134,6 +140,18 @@ class Game {
         this.updateUI();
     }
 
+    undo() {
+        if (this.drawingManager.undo()) {
+            this.updateUI();
+        }
+    }
+
+    redo() {
+        if (this.drawingManager.redo()) {
+            this.updateUI();
+        }
+    }
+
     startChallenge(id) {
         this.mode = 'challenge';
         this.currentChallenge = this.challengeManager.loadTrack(id, this.rider, this.drawingManager);
@@ -153,7 +171,9 @@ class Game {
             challengeName: this.currentChallenge?.name || '',
             user: this.user,
             isLoggingIn: this.isLoggingIn,
-            drawMode: this.drawMode
+            drawMode: this.drawMode,
+            canUndo: this.drawingManager.historyIndex > 0,
+            canRedo: this.drawingManager.historyIndex < this.drawingManager.history.length - 1
         });
     }
 
